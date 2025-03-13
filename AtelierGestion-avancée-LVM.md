@@ -1,3 +1,5 @@
+# Atelier : Gestion avancée de LVM
+
 ## 1. Prérequis
 
 Pour cet atelier, tu as besoin :
@@ -140,3 +142,36 @@ mount /dev/vg_datas/lv_datas2 /mnt/datas2
 ![lvc-form](https://github.com/KAOUTARBAH/Stockage/blob/main/ImgAtelierLVM/lvc-form.png)
 
 ![montage](https://github.com/KAOUTARBAH/Stockage/blob/main/ImgAtelierLVM/montage.png)
+
+
+## Étape 6 - Création d'un snapshot
+- Avant de commencer : créé un fichier dans le dossier /mnt/datas2 :
+```bash
+echo "Contenu avant création du snapshot !" > /mnt/datas2/test_file.txt
+```
+- Exécute maintenant les commandes suivantes pour faire un snapshot et monter ce snapshot dans /mnt/datas_snap :
+```bash
+lvcreate --size 5G --snapshot --name lv_datas_snap /dev/vg_datas/lv_datas2
+mkdir /mnt/datas_snap
+mount /dev/vg_datas/lv_datas_snap /mnt/datas_snap/
+```
+- Vérifie le contenu du snapshot :
+```bash
+ls /mnt/datas2
+ls /mnt/datas_snap
+```
+
+- Si c'est bien un snapshot, le contenu de datas_snap est identique à celui de lv_datas2
+
+- Créé un fichier dans le répertoire /mnt/datas2 :
+```bash
+echo "Après création du snapshot" > /mnt/datas2/test_file1.txt
+```
+
+- Vérifie si ce fichier apparaît également dans le snapshot ou s'il est bien maintenant indépendant du sa source.
+
+- Pour supprimer le snapshot :
+```bash
+umount /mnt/datas_snap
+lvremove /dev/vg_datas/lv_datas_snap
+```
