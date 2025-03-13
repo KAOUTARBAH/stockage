@@ -59,7 +59,7 @@ sudo mkdir /mnt/mon_lv
 
 # Monter le LV
 sudo mount /dev/mon_vg/mon_lv /mnt/mon_lv
-```
+``` 
 ![Formatage-mont](https://github.com/KAOUTARBAH/Stockage/blob/main/ImgLVM/mont.png)
 
 
