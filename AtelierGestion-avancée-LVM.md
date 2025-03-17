@@ -147,7 +147,11 @@ mount /dev/vg_datas/lv_datas2 /mnt/datas2
 ## Étape 6 - Création d'un snapshot
 - Avant de commencer : créé un fichier dans le dossier /mnt/datas2 :
 ```bash
+# si ta le droit
 echo "Contenu avant création du snapshot !" > /mnt/datas2/test_file.txt
+
+# si tu n'a pas le droit
+echo "Contenu avant création du snapshot !" | sudo tee /mnt/datas2/test_file.txt > /dev/null 
 ```
 - Exécute maintenant les commandes suivantes pour faire un snapshot et monter ce snapshot dans /mnt/datas_snap :
 ```bash
@@ -155,17 +159,21 @@ lvcreate --size 5G --snapshot --name lv_datas_snap /dev/vg_datas/lv_datas2
 mkdir /mnt/datas_snap
 mount /dev/vg_datas/lv_datas_snap /mnt/datas_snap/
 ```
+![snapshot](https://github.com/KAOUTARBAH/Stockage/blob/main/ImgAtelierLVM/snapshot.png)
+
 - Vérifie le contenu du snapshot :
 ```bash
 ls /mnt/datas2
 ls /mnt/datas_snap
 ```
 
+![lsSnapshot](https://github.com/KAOUTARBAH/Stockage/blob/main/ImgAtelierLVM/lsSnapshot.png)
+
 - Si c'est bien un snapshot, le contenu de datas_snap est identique à celui de lv_datas2
 
 - Créé un fichier dans le répertoire /mnt/datas2 :
 ```bash
-echo "Après création du snapshot" > /mnt/datas2/test_file1.txt
+echo "Après création du snapshot" | sudo tee /mnt/datas2/test_file1.txt > /dev/null 
 ```
 
 - Vérifie si ce fichier apparaît également dans le snapshot ou s'il est bien maintenant indépendant du sa source.
@@ -175,3 +183,36 @@ echo "Après création du snapshot" > /mnt/datas2/test_file1.txt
 umount /mnt/datas_snap
 lvremove /dev/vg_datas/lv_datas_snap
 ```
+
+![supSnapshot](https://github.com/KAOUTARBAH/Stockage/blob/main/ImgAtelierLVM/supSnapshot.png)
+
+
+## Étape 7 - Redimensionnement d'un LV
+Avant de redimensionner le système de fichiers, il est fortement recommandé d'en vérifier l'intégrité avec e2fsck.
+
+Tout d'abord, il faut le démonter avec umount /mnt/datas
+Pour le redimensionner à 15 Go :
+lvresize -L 15G /dev/vg_datas/lv_datas
+Un message d'alerte te prévient que tes données ainsi que ton FS peuvent être détruite !
+C'est normal car tu vas réduire la taille.
+LVM ne gère pas les données, donc même si le LV est vide, comme ici, tu as le message d'alerte.
+
+Ne pas oublier de redimensionner le FS :
+resize2fs /dev/vg_datas/lv_datas
+Pourquoi cela ne marche pas ?
+Comme indiqué à l'écran, essaye d'exécuter la commande e2fsck -f /dev/vg_datas/lv_datas.
+Est-ce que cela marche ?
+
+Tu as ce message, et les erreurs associées car la taille du FS dépasse actuellement la taille physique du LV.
+Tu as ce dysfonctionnement car tu as réduit la taille du LV sans réduire d'abord la taille du FS ! Cette manipulation amène une corruption dans la structure du FS.
+
+Pour pouvoir faire cela correctement, il faut tout d'abord revenir à la taille initiale du LV :
+lvresize -L 29.99G /dev/vg_datas/lv_datas
+Puis tu peux réparer le FS :
+e2fsck -f /dev/vg_datas/lv_datas
+Cela va te permettre de réduire le FS :
+resize2fs /dev/vg_datas/lv_datas 15G
+Uniquement là tu peux réduire la taille du LV :
+lvresize -L 15G /dev/vg_datas/lv_datas
+Tu peux vérifier que l'opération a réussi avec la commande :
+e2fsck -f /dev/vg_datas/lv_datas
